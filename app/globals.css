@@ -1,26 +1,161 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+  THE GRID — design tokens.
+
+  Light only, true neutrals, one accent. The eight rank colours are the only
+  saturated ink on the site: everything outside the grid is grey or black, so
+  that colour always means rank and never means decoration.
+*/
+@theme {
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Helvetica, Arial, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Surfaces and ink — no hue, nothing muddy. */
+  --color-paper: #ffffff;
+  --color-well: #fafafa;
+  --color-ink: #0a0a0a;
+  --color-ink-2: #525252;
+  --color-ink-3: #8a8a8a;
+  --color-ink-4: #bdbdbd;
+  --color-rule: #ebebeb;
+
+  /* Used sparingly. The grid carries the colour. */
+  --color-accent: #d8483a;
+
+  /* Uncapped ranks: grey. */
+  --color-rank-karting: #d4d4d4;
+  --color-rank-junior: #b4b4b4;
+  --color-rank-academy: #949494;
+  /* The 349 capped seats: red, deepening to the top. */
+  --color-rank-test: #f0aea6;
+  --color-rank-reserve: #e58074;
+  --color-rank-race: #d8483a;
+  --color-rank-lead: #b22518;
+  --color-rank-champion: #7f0d04;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+/* Anything that counts or counts down. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+/*
+  The grid marks. 1,200 of them, so everything here is CSS — no React state
+  change touches the field itself. Each mark is an F1 car seen from above,
+  clipped out of a coloured box: front wing, nose, sidepods, rear wing.
+*/
+.car {
+  --pop: 1.8;
+  clip-path: polygon(
+    18% 0%, 82% 0%, 82% 13%, 60% 13%,
+    60% 30%, 72% 30%, 72% 58%, 60% 58%,
+    60% 86%, 88% 86%, 88% 100%, 12% 100%,
+    12% 86%, 40% 86%, 40% 58%, 28% 58%,
+    28% 30%, 40% 30%, 40% 13%, 18% 13%
+  );
+  transition: transform 90ms ease-out;
+  animation: car-arrive 460ms cubic-bezier(0.22, 0.7, 0.2, 1) backwards;
+  animation-delay: calc(var(--band, 0) * 70ms + var(--i, 0) * 1.4ms);
+}
+
+/* The cars take the grid a rank at a time, seniority first. */
+@keyframes car-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+  clip-path would eat an outline, so the hover ring is four one-pixel
+  drop-shadows, which follow the silhouette instead of its bounding box.
+*/
+.car:hover {
+  transform: scale(var(--pop));
+  filter: drop-shadow(0.6px 0 0 var(--color-ink))
+    drop-shadow(-0.6px 0 0 var(--color-ink))
+    drop-shadow(0 0.6px 0 var(--color-ink))
+    drop-shadow(0 -0.6px 0 var(--color-ink));
+}
+
+/* The Champions are already the largest marks on the page; they only nudge. */
+.car--champion {
+  --pop: 1.14;
+}
+
+/* A pay-driver flash: §4, visible on the livery for as long as it is held. */
+.car[data-pay="1"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    transparent 0 55%,
+    var(--color-paper) 55% 72%,
+    transparent 72%
+  );
+}
+
+/* The circuit. Six cars, one per constructor, lapping continuously. */
+.tarmac {
+  fill: none;
+  stroke: #f4f4f4;
+  stroke-width: 22;
+  stroke-linejoin: round;
+}
+.kerb {
+  fill: none;
+  stroke: var(--color-rule);
+  stroke-width: 1;
+  stroke-dasharray: 5 9;
+  stroke-linejoin: round;
+}
+
+/* A live seat bid, still on its clock. */
+.pip {
+  animation: pip 1.7s ease-in-out infinite;
+}
+@keyframes pip {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.28;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .car,
+  .pip {
+    animation: none;
+  }
+  .car {
+    opacity: 1;
+  }
+}
+
+::selection {
+  background: var(--color-ink);
+  color: var(--color-paper);
 }
